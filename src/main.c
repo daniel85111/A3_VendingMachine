@@ -310,18 +310,23 @@ void update_terminal(void){
   printk("-------------------------------------\n");
   printk("---------------BEM VINDO-------------\n");
   printk("-------------------------------------\n");
-
-  printk("      Produto: %s\x1b[0K\n",product_names[state]);
+  
+  if (state > 2){
+    printk("      Produto: %s\x1b[0K\n",product_names[last_state]);
+  }
+  else{
+    printk("      Produto: %s\x1b[0K\n",product_names[state]);
+  }
   printk("      Preco: %d.%d EUR\x1b[0K\n",prod_price_cent/100,prod_price_cent%100);
   
   if (buyed){
     buyed = false;
-    printk("Entregando %s, dinheiro restante: %d.%d EUR\x1b[0K\n", product_names[state], money_cent/100, money_cent%100);
-    prod_d[state]++;
+    printk("Entregando %s, dinheiro restante: %d.%d EUR\x1b[0K\n", product_names[last_state], money_cent/100, money_cent%100);
+    prod_d[last_state]++;
   }
   else if(no_money){
     no_money = false;
-    printk("Sem dinheiro suficiente. %s custa %d.%d EUR,tem: %d.%d EUR\x1b[0K\n", product_names[state],prod_price_cent/100,prod_price_cent%100, money_cent/100, money_cent%100);
+    printk("Sem dinheiro suficiente. %s custa %d.%d EUR,tem: %d.%d EUR\x1b[0K\n", product_names[last_state],prod_price_cent/100,prod_price_cent%100, money_cent/100, money_cent%100);
   }
   else{
     printk("        Dinheiro disponivel: %d.%d EUR\x1b[0K\n",money_cent/100,money_cent%100);
