@@ -1,8 +1,8 @@
 /** \file main.c
-* \brief Codigo da maquina de vendas
+* \brief Simulação de máquina de vendas.
 *
-*  Este codigo simula um funcionamento de uma maquina de vendas
-* que funciona atraves de uma maquina de estados
+*  Este código simula o funcionamento de uma máquina de vendas
+*  através de uma máquina de estados
 *
 * \author Daniel Barra de Almeida        85111
 * \author Marco  Antonio da Silva Santos 83192
@@ -53,7 +53,7 @@ bool but1 = false, but2 = false, but3 = false, but4 = false, but5 = false, but6 
 bool buyed = false;       /* Produto comprado com sucesso */
 bool no_money = false;    /* Nao tem dinheiro suficiente */
 bool delivering_money = false;  /* Devolver o dinheiro */
-int prod_price_cent;      /* Pre�o do produto em centimos */
+int prod_price_cent;      /* Pre�o do produto em centimos */
 int prod_d[3]= {0, 0, 0}; /* Contagem de produtos vendidos no total */
 char product_names[3][20]={"Cerveja", "Sandwich Tuna", "Cafe"};
 
@@ -62,11 +62,12 @@ const struct device *gpio0_dev;         /* Pointer to GPIO device structure */
 /* Int related declarations */
 static struct gpio_callback but1_cb_data; /* Callback structure */
 
-/** \brief  Callback function.
-*  E chamada sempre que um botao e primido.
+/** \brief  Callback.
+*  É chamada sempre que um botão é primido.
 *
-* Sempre que um botao e pressionado esta funcao ativa
-* uma flag para sinalizar que acoes tem de ser efetuadas 
+* Sempre que um botao é pressionado esta funcao ativa
+* uma flag para sinalizar qual botão foi
+* de modo a saber que ações têm de ser efetuadas.
 */
 
 /* Callback function and variables*/
@@ -113,94 +114,11 @@ void but1press_cbfunction(const struct device *dev, struct gpio_callback *cb, ui
     }
 }
 
-
-
-
-
-/** \brief  Input Checker function
-*  Esta funcao verifica se foram recebidos comandos
+/** \brief  Configuração.
+*  Configura a interface da placa.
 *
-* Analisa que butoes foram primidos e altera
-* variaveis necessarias correspondentes
-*/
-void checkInputs(void){
-
-  if (but5){            /* BOARDBUT5 - P0.28 - Insert 0.1 EUR */
-    but5 = false;
-    money_cent += 10;
-  }
-
-  if (but6){            /* BOARDBUT6 - P0.29 - Insert 0.2 EUR */
-    but6 = false;
-    money_cent+=20;
-  }
-
-  if (but7){            /* BOARDBUT7 - P0.30 - Insert 0.5 EUR */
-    but7 = false;
-    money_cent+=50;
-  }
-
-  if (but8){            /* BOARDBUT8 - P0.31 - Insert 1.0 EUR */
-    but8 = false;
-    money_cent+=100;
-  }
-}
-
-void update_terminal(void){
-  printk("\x1b[H");   // Send cursor to home
-  printf("\x1B[?25l");   // Hide cursor
-  printk("-------------------------------------\n");
-  printk("Maquina de Vendas feita por:\n");
-  printk(" Daniel Barra de Almeida        85111\n");
-  printk(" Marco  Antonio da Silva Santos 83192\n");
-  printk("-------------------------------------\n");
-  printk("---------------BEM VINDO-------------\n");
-  printk("-------------------------------------\n");
-
-  printk("      Produto: %s\x1b[0K\n",product_names[state]);
-  printk("      Preco: %d.%d EUR\x1b[0K\n",prod_price_cent/100,prod_price_cent%100);
-  
-  if (buyed){
-    buyed = false;
-    printk("Entregando %s, dinheiro restante: %d.%d EUR\x1b[0K\n", product_names[state], money_cent/100, money_cent%100);
-    prod_d[state]++;
-    k_msleep(2000);
-  }
-  else if(no_money){
-    no_money = false;
-    printk("Sem dinheiro suficiente. %s custa %d.%d EUR,tem: %d.%d EUR\x1b[0K\n", product_names[state],prod_price_cent/100,prod_price_cent%100, money_cent/100, money_cent%100);
-    k_msleep(2000);
-  }
-  else{
-    printk("        Dinheiro disponivel: %d.%d EUR\x1b[0K\n",money_cent/100,money_cent%100);
-  }
-  
-  printk("-------------------------------------\x1b[0K\n");
-  printk("Total de produtos Entregues:\x1b[0K\n");
-  printk("                    Cerveja:%d\x1b[0K\n",prod_d[0]);
-  printk("                    Sandwich Tunaa:%d\x1b[0K\n",prod_d[1]);
-  printk("                    Cafe:%d\x1b[0K\n",prod_d[2]);
-  printk("-------------------------------------\n");
-  printk("\x1b[0J"); /* Clear from cursor to end of screen*/
-
-
-  if (delivering_money){
-    delivering_money = false;
-    printk("Devolvendo: %d.%d EUR\x1b[0K\n",money_cent/100,money_cent%100);
-    printk("Obrigado e volte sempre!\x1b[0K\n");
-    printk("-------------------------------------\n");
-    money_cent=0;
-    k_msleep(2000);    
-  }
-
-
-}
-
-/** \brief  Configuration function
-*  Configura a placa
-*
-* Esta funcao faz as configuracoes necessarias
-* para a interface da placa ser utilizada adequadamente
+* Esta função faz as configurações necessárias
+* para a interface da placa ser utilizada adequadamente.
 */
 void config(void){
 
@@ -345,51 +263,139 @@ void config(void){
 
 }
 
-/** \brief  main function
-*  Funcao de funcionamento
+/** \brief  Input Checker.
+*  Esta função verifica se foi recebido dinheiro.
 *
-* Esta e a funcao principal de funcionamento
+* Esta função é responsável por verificar se foi inserido dinheiro
+* e alterar o valor disponivel de acordo com o dinheiro inserido.
+*/
+void checkInputs(void){
+
+  if (but5){            /* BOARDBUT5 - P0.28 - Insert 0.1 EUR */
+    but5 = false;
+    money_cent += 10;
+  }
+
+  if (but6){            /* BOARDBUT6 - P0.29 - Insert 0.2 EUR */
+    but6 = false;
+    money_cent+=20;
+  }
+
+  if (but7){            /* BOARDBUT7 - P0.30 - Insert 0.5 EUR */
+    but7 = false;
+    money_cent+=50;
+  }
+
+  if (but8){            /* BOARDBUT8 - P0.31 - Insert 1.0 EUR */
+    but8 = false;
+    money_cent+=100;
+  }
+}
+
+/** \brief  Update terminal.
+*  É chamada para atualizar o terminal.
+*
+* Em cada ciclo da função principal esta função é chamada
+* de modo a manter o terminal com a informação atualizada
+* e dar informações ao utilizador quando necessário.
+*/
+
+void update_terminal(void){
+  printk("\x1b[H");   // Send cursor to home
+  printf("\x1B[?25l");   // Hide cursor
+  printk("-------------------------------------\n");
+  printk("Maquina de Vendas feita por:\n");
+  printk(" Daniel Barra de Almeida        85111\n");
+  printk(" Marco  Antonio da Silva Santos 83192\n");
+  printk("-------------------------------------\n");
+  printk("---------------BEM VINDO-------------\n");
+  printk("-------------------------------------\n");
+
+  printk("      Produto: %s\x1b[0K\n",product_names[state]);
+  printk("      Preco: %d.%d EUR\x1b[0K\n",prod_price_cent/100,prod_price_cent%100);
+  
+  if (buyed){
+    buyed = false;
+    printk("Entregando %s, dinheiro restante: %d.%d EUR\x1b[0K\n", product_names[state], money_cent/100, money_cent%100);
+    prod_d[state]++;
+  }
+  else if(no_money){
+    no_money = false;
+    printk("Sem dinheiro suficiente. %s custa %d.%d EUR,tem: %d.%d EUR\x1b[0K\n", product_names[state],prod_price_cent/100,prod_price_cent%100, money_cent/100, money_cent%100);
+  }
+  else{
+    printk("        Dinheiro disponivel: %d.%d EUR\x1b[0K\n",money_cent/100,money_cent%100);
+  }
+  
+  printk("-------------------------------------\x1b[0K\n");
+  printk("Total de produtos Entregues:\x1b[0K\n");
+  printk("                    Cerveja:%d\x1b[0K\n",prod_d[0]);
+  printk("                    Sandwich Tunaa:%d\x1b[0K\n",prod_d[1]);
+  printk("                    Cafe:%d\x1b[0K\n",prod_d[2]);
+  printk("-------------------------------------\n");
+  printk("\x1b[0J"); /* Clear from cursor to end of screen*/
+
+
+  if (delivering_money){
+    delivering_money = false;
+    printk("Devolvendo: %d.%d EUR\x1b[0K\n",money_cent/100,money_cent%100);
+    printk("Obrigado e volte sempre!\x1b[0K\n");
+    printk("-------------------------------------\n");
+    money_cent=0;
+  }
+
+
+}
+
+
+/** \brief  Função principal.
+*  Máquina de estados.
+*
+* Esta é a funcao principal onde estão descritos os diferentes estados
+* e as verificações de quando mudar de estado.
+* Em cada estado algumas variáveis são alteradas, de modo a manter
+* o terminal com a informação atualizada do estado atual de funcionamento.
 */
 /* Main function */
 void main(void) {
-    config();
+    config();                                             /* Configura a placa para a execução deste programa */
         
-    printk("\x1b[2J"); /* Clear screen */
+    printk("\x1b[2J");                                    /* Clear screen */
 
     /* Working loop */
     while(1) {
-      checkInputs(); /* Verifica se houve inputs */
+      checkInputs();                                      /* Verifica se houve inputs de dinheiro */
 
 
       switch(state){
         
-        case BEER:                         /* Estado 0 - Cerveja */
+        case BEER:                                        /* Estado 0 Selection - Cerveja */
           prod_price_cent = 100;
 
           gpio_pin_set(gpio0_dev, BOARDLED1, 0);
           gpio_pin_set(gpio0_dev, BOARDLED2, 1);
           gpio_pin_set(gpio0_dev, BOARDLED3, 1);
           
-          if (money_cent >= prod_price_cent){   /* LED4 acende se for possivel comprar */
+          if (money_cent >= prod_price_cent){             /* LED4 acende se for possivel comprar */
             gpio_pin_set(gpio0_dev, BOARDLED4, 0);
           }
           else {
             gpio_pin_set(gpio0_dev, BOARDLED4, 1);
           }
-          if (but1){            /*go to TUNA state */
+          if (but1){                                      /*go to TUNA state */
               but1 = false;
               state = TUNA;  
           }
-          if (but3){              /* go to COFFE state */
+          if (but3){                                      /* go to COFFE state */
             but3 = false;
             state = COFFE;            
           }
-          if (but2){            /* go to TRYBUY state  */
+          if (but2){                                      /* go to TRYBUY state  */
             but2 = false;
             last_state = state;
             state = TRYBUY;
           }
-          if (but4){            /* go to MONEYDELIVER state */
+          if (but4){                                      /* go to MONEYDELIVER state */
             but4 = false;
             last_state = state;
             state = MONEYDELIVER;      
@@ -398,34 +404,34 @@ void main(void) {
 
           break;
 
-        case TUNA:                         /* Estado 1 - Sandwich Tuna */
+        case TUNA:                                        /* Estado 1 Selection - Sandwich Tuna */
           prod_price_cent = 150;
 
           gpio_pin_set(gpio0_dev, BOARDLED1, 1);
           gpio_pin_set(gpio0_dev, BOARDLED2, 0);
           gpio_pin_set(gpio0_dev, BOARDLED3, 1);
           
-          if (money_cent >= prod_price_cent){   /* LED4 acende se for possivel comprar */
+          if (money_cent >= prod_price_cent){             /* LED4 acende se for possivel comprar */
             gpio_pin_set(gpio0_dev, BOARDLED4, 0);
           }
           else {
             gpio_pin_set(gpio0_dev, BOARDLED4, 1);
           }
 
-          if (but1){            /*go to COFFE state */
+          if (but1){                                      /*go to COFFE state */
               but1 = false;
               state = COFFE;  
           }
-          if (but3){              /* go to BEER state */
+          if (but3){                                      /* go to BEER state */
             but3 = false;
             state = BEER;            
           }
-          if (but2){            /* go to TRYBUY state  */
+          if (but2){                                      /* go to TRYBUY state  */
             but2 = false;
             last_state = state;
             state = TRYBUY;
           }
-          if (but4){            /* go to MONEYDELIVER state */
+          if (but4){                                      /* go to MONEYDELIVER state */
             but4 = false;
             last_state = state;
             state = MONEYDELIVER;      
@@ -434,32 +440,32 @@ void main(void) {
           break;
 
 
-        case COFFE:                         /* Estado 2 - Cafe */
+        case COFFE:                                       /* Estado 2 Selection - Cafe */
           prod_price_cent = 50;
 
           gpio_pin_set(gpio0_dev, BOARDLED1, 1);
           gpio_pin_set(gpio0_dev, BOARDLED2, 1);          
           gpio_pin_set(gpio0_dev, BOARDLED3, 0);
-          if (money_cent >= prod_price_cent){   /* LED4 acende se for possivel comprar */
+          if (money_cent >= prod_price_cent){             /* LED4 acende se for possivel comprar */
             gpio_pin_set(gpio0_dev, BOARDLED4, 0);
           }
           else {
             gpio_pin_set(gpio0_dev, BOARDLED4, 1);
           }
-          if (but1){            /*go to BEER state */
+          if (but1){                                      /*go to BEER state */
               but1 = false;
               state = BEER;  
           }
-          if (but3){              /* go to TUNA state */
+          if (but3){                                      /* go to TUNA state */
             but3 = false;
             state = TUNA;            
           }
-          if (but2){            /* go to TRYBUY state  */
+          if (but2){                                      /* go to TRYBUY state  */
             but2 = false;
             last_state = state;
             state = TRYBUY;
           }
-          if (but4){            /* go to MONEYDELIVER state */
+          if (but4){                                      /* go to MONEYDELIVER state */
             but4 = false;
             last_state = state;
             state = MONEYDELIVER;      
@@ -467,30 +473,32 @@ void main(void) {
 
           break;
 
-          case TRYBUY:
-            if (money_cent >= prod_price_cent){
-              money_cent = money_cent - prod_price_cent;
-              buyed = true;     
+          case TRYBUY:                                    /* Estado 3 TryBuy */
+            if (money_cent >= prod_price_cent){           /* Se foi possivel comprar */ 
+              money_cent = money_cent - prod_price_cent;  /* Dinheiro que sobra */
+              buyed = true;                               /* Flag que sinaliza que foi comprado com sucesso */
             }
-            else{
-              no_money = true;  
+            else{                                         /* Se nao tem dinheiro suficiente para comprar */
+              no_money = true;                            /* Flag sinaliza que NÃO foi comprado com sucesso */
             }
-            update_terminal();
-            state = last_state;
+            update_terminal();                            /* Atualizar o terminal */
+            k_msleep(2000);                               /* Tempo de duração deste estado é de 2s, simular entrega de produto, ou mensagem de erro*/
+            state = last_state;                           /* Regressar ao estado anterior */
 
             break;
 
-          case MONEYDELIVER:
-            if (money_cent > 0){
-              delivering_money = true;
+          case MONEYDELIVER:                             /* Estado 4 MoneyDeliver */
+            if (money_cent > 0){                         /* Se houver algum dinheiro para devolver */
+              delivering_money = true;                   /* Flag que sinaliza que é para devolver o dinheiro que tem na máquina */
             }
-            update_terminal();
-            state = last_state;
+            update_terminal();                           /* Atualizar o terminal */
+            k_msleep(2000);                              /* Tempo de duração deste estado é de 2s, simular entrega de produto, ou mensagem de erro*/
+            state = last_state;                          /* Regressar ao estado anterior */
 
             break;
       }
 
-      update_terminal();  
+      update_terminal();                                 /* Atualizar o terminal */
           
 
       //k_msleep(200); // Atraso para o terminal nao piscar demasiado
